@@ -18,19 +18,19 @@ class Length(nn.Module):
         return inputs.norm(dim=self.dim, keepdim=self.keepdim, p=self.p)
 
 
-# class SafeLength(nn.Module):
+class SafeLength(nn.Module):
 
-#     def __init__(self, dim=2, keepdim=False, eps=1e-7):
-#         super(SafeLength, self).__init__()
-#         self.dim = dim
-#         self.keepdim = keepdim
-#         self.eps = eps
+    def __init__(self, dim=2, keepdim=False, eps=1e-7):
+        super(SafeLength, self).__init__()
+        self.dim = dim
+        self.keepdim = keepdim
+        self.eps = eps
 
-#     def forward(self, x):
-#         squared_norm = torch.sum(torch.square(x),
-#                                  axis=self.dim,
-#                                  keepdim=self.keepdim)
-#         return torch.sqrt(squared_norm + self.eps)
+    def forward(self, x):
+        squared_norm = torch.sum(torch.square(x),
+                                 axis=self.dim,
+                                 keepdim=self.keepdim)
+        return torch.sqrt(squared_norm + self.eps)
 
 
 class ConvCapsuleLayer3D(nn.Module):
