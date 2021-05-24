@@ -1,9 +1,9 @@
+import capsules.helpers as h
 import torch
-from torch.nn import functional as F
+from capsules.layers.switchnorm import SwitchNorm3d
 from torch import nn
 from torch.autograd import Variable
-
-import capsules.helpers as h
+from torch.nn import functional as F
 
 
 class Length(nn.Module):
