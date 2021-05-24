@@ -32,3 +32,16 @@ def smsquash(x, caps_dim=1, atoms_dim=2, eps=1e-7, **kwargs):
     b = x / safe_norm
 
     return a * b
+
+
+def calc_same_padding(
+    input_,
+    kernel=1,
+    stride=1,
+    dilation=1,
+    transposed=False,
+):
+    if transposed:
+        return (dilation * (kernel - 1) + 1) // 2 - 1, input_ // (1. / stride)
+    else:
+        return (dilation * (kernel - 1) + 1) // 2, input_ // stride
