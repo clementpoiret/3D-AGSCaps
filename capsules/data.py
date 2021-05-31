@@ -22,12 +22,11 @@ class SyntheticDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        sample = {"input": self.X[idx], "gt": self.y[idx]}
-
-        return sample
+        return self.X[idx], self.y[idx]
 
 
 class SyntheticDataModule(LightningDataModule):
+    """Synthetic DataModule used for training"""
 
     def __init__(self,
                  n_train: int = 128,
