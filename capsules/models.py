@@ -39,7 +39,7 @@ class AGSCaps(nn.Module):
                  segcaps_sigmoid_routings=True,
                  segcaps_constrained=True,
                  segcaps_use_switchnorm=False,
-                 final_decoder_sigmoid=False,
+                 final_rec_sigmoid=False,
                  normalization="s",
                  using_bn=False,
                  union_type=None,
@@ -124,8 +124,8 @@ class AGSCaps(nn.Module):
         # Length layer to output capsules' predictions
         self.outseg = Length(dim=2, keepdim=False, p=2)
 
-        # Decoder
-        decoder = [
+        # Reconstruction
+        reconstructor = [
             nn.Conv3d(in_channels=segcaps_num_atoms * out_channels,
                       out_channels=64,
                       kernel_size=1,
@@ -134,22 +134,22 @@ class AGSCaps(nn.Module):
                       bias=True),
             nn.ReLU(inplace=True),
             nn.Conv3d(in_channels=64,
-                      out_channels=128,
+                      out_channels=64,
                       kernel_size=1,
                       stride=1,
                       padding=0,
                       bias=True),
             nn.ReLU(inplace=True),
-            nn.Conv3d(in_channels=128,
+            nn.Conv3d(in_channels=64,
                       out_channels=1,
                       kernel_size=1,
                       stride=1,
                       padding=0,
                       bias=True),
         ]
-        if final_decoder_sigmoid:
-            decoder.append(nn.Sigmoid())
-        self.decoder = nn.Sequential(*decoder)
+        if final_rec_sigmoid:
+            reconstructor.append(nn.Sigmoid())
+        self.reconstructor = nn.Sequential(*reconstructor)
 
     def forward(self, x, y=None):
         # encoder part
@@ -194,8 +194,8 @@ class AGSCaps(nn.Module):
         # Merging caps and atoms
         masked = masked.view(bs, -1, H, W, D)
 
-        # Reconstructing via the decoder network
-        reconstruction = self.decoder(masked)
+        # Reconstructing via the reconstructor network
+        reconstruction = self.reconstructor(masked)
 
         return segmentation, reconstruction
 
