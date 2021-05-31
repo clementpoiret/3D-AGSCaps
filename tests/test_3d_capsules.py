@@ -1,4 +1,4 @@
-from 3d_capsules import __version__
+from capsules import __version__
 
 
 def test_version():
