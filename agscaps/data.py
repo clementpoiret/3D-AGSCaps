@@ -34,19 +34,32 @@ class SyntheticDataModule(LightningDataModule):
                  n_test: int = 16,
                  size: tuple = (32, 32, 32),
                  n_classes: int = 3,
-                 batch_size: int = 1):
+                 batch_size: int = 1,
+                 pin_memory: bool = True,
+                 num_workers: int = 8):
         super().__init__()
         self.batch_size = batch_size
+        self.pin_memory = pin_memory
+        self.num_workers = num_workers
 
         self.train = SyntheticDataset(n=n_train, size=size, n_classes=n_classes)
         self.val = SyntheticDataset(n=n_val, size=size, n_classes=n_classes)
         self.test = SyntheticDataset(n=n_test, size=size, n_classes=n_classes)
 
     def train_dataloader(self):
-        return DataLoader(self.train, batch_size=self.batch_size)
+        return DataLoader(self.train,
+                          batch_size=self.batch_size,
+                          pin_memory=self.pin_memory,
+                          num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val, batch_size=self.batch_size)
+        return DataLoader(self.val,
+                          batch_size=self.batch_size,
+                          pin_memory=self.pin_memory,
+                          num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.test, batch_size=self.batch_size)
+        return DataLoader(self.test,
+                          batch_size=self.batch_size,
+                          pin_memory=self.pin_memory,
+                          num_workers=self.num_workers)

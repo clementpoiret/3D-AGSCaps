@@ -53,7 +53,7 @@ def create_conv(in_channels,
             # add learnable bias only in the absence of batchnorm/groupnorm
             bias = not ('g' in order or 'b' in order)
             modules.append(('conv',
-                            nn.conv3d(in_channels,
+                            nn.Conv3d(in_channels,
                                       out_channels,
                                       kernel_size,
                                       bias,

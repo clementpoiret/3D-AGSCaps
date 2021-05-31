@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "3D-Capsules"
+name = "AGSCaps"
 version = "0.1.0"
 description = ""
 authors = ["Clément POIRET <poiret.clement@outlook.fr>"]

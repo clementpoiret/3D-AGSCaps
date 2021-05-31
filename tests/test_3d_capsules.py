@@ -1,4 +1,4 @@
-from capsules import __version__
+from agscaps import __version__
 
 
 def test_version():
