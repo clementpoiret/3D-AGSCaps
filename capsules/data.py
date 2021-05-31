@@ -13,7 +13,7 @@ class SyntheticDataset(Dataset):
         self.n = n
 
         self.X = torch.randn(n, 1, *size)
-        self.y = torch.randint_like(self.X, n_classes + 1).squeeze(1)
+        self.y = torch.randint(0, 2, (n, n_classes, *size))
 
     def __len__(self):
         return self.n
