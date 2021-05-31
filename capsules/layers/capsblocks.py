@@ -1,8 +1,9 @@
 import torch
-from capsules.helpers import calc_same_padding, squash
-from capsules.layers.attention import AttentionBlock
-from capsules.layers.convcaps import ConvCapsuleLayer3D
 from torch import nn
+
+from ..helpers import calc_same_padding, squash
+from .attention import AttentionBlock
+from .convcaps import ConvCapsuleLayer3D
 
 
 class SingleCaps(nn.Sequential):

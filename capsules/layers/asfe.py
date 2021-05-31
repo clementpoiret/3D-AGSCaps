@@ -1,7 +1,8 @@
 import torch
-from capsules.helpers import calc_same_padding
-from capsules.layers.switchnorm import SwitchNorm3d
 from torch import nn
+
+from ..helpers import calc_same_padding
+from .switchnorm import SwitchNorm3d
 
 
 def create_conv(in_channels,

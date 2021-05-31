@@ -45,3 +45,7 @@ def calc_same_padding(
         return (dilation * (kernel - 1) + 1) // 2 - 1, input_ // (1. / stride)
     else:
         return (dilation * (kernel - 1) + 1) // 2, input_ // stride
+
+
+def number_of_features_per_level(init_channel_number, num_levels):
+    return [init_channel_number * 2**k for k in range(num_levels)]

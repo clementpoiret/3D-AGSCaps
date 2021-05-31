@@ -1,5 +1,6 @@
-from capsules.layers.switchnorm import SwitchNorm3d
 from torch import nn
+
+from .switchnorm import SwitchNorm3d
 
 
 class AttentionBlock(nn.Module):
