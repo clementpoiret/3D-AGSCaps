@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+import torch.nn.functional as F
 from torch import nn, optim
 
 from .helpers import number_of_features_per_level, smsquash, squash
