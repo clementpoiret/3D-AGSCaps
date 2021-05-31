@@ -1,9 +1,11 @@
-from torch import nn
+import pytorch_lightning as pl
+from torch import nn, optim
 
 from .helpers import number_of_features_per_level, smsquash, squash
 from .layers.asfe import StemBlock
 from .layers.capsblocks import AttentionDecoderCaps, DoubleCaps, EncoderCaps
 from .layers.convcaps import Length
+from .loss import FocalTversky_loss
 
 
 class AGSCaps(nn.Module):
@@ -195,3 +197,69 @@ class AGSCaps(nn.Module):
         reconstruction = self.decoder(masked)
 
         return segmentation, reconstruction
+
+
+class SegmentationModel(pl.LightningModule):
+
+    def __init__(self,
+                 hparams,
+                 seg_loss=FocalTversky_loss({
+                     "apply_nonlin": nn.Softmax(dim=1),
+                 }),
+                 rec_loss=F.mse_loss,
+                 optimizer=optim.AdamW,
+                 scheduler=None,
+                 learning_rate=1e-3,
+                 classes_names=None,
+                 is_capsnet=False):
+        super(SegmentationModel, self).__init__()
+        self.hparams = hparams
+        self.learning_rate = learning_rate
+        self.seg_loss = seg_loss
+        self.rec_loss = rec_loss
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.is_capsnet = is_capsnet
+        if classes_names:
+            assert len(classes_names) == hparams['out_channels']
+        self.classes_names = classes_names
+
+        self._model = AGSCaps(**hparams)
+
+    def forward(self, x, y=None):
+        return self._model(x, y)
+
+    def default_step(self, batch, log_preffix="Training"):
+        x, y = batch
+        _, labels = y.max(dim=1)
+
+        y_hat, reconstruction = self.forward(x, y)
+        mask = labels.unsqueeze(1).clip(0, 1)
+        target = x * mask
+        rec_loss = self.rec_loss(reconstruction, target)
+        seg_loss = self.seg_loss(y_hat, labels.long())
+        loss = seg_loss + self.hparams['α'] * rec_loss
+
+        self.log(f"{log_preffix} SegLoss", seg_loss)
+        self.log(f"{log_preffix}  RecLoss", rec_loss)
+
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = self.optimizer(self.parameters(), lr=self.learning_rate)
+        optimizers = {"optimizer": optimizer}
+
+        if self.scheduler:
+            optimizers["lr_scheduler"] = self.scheduler(optimizer)
+            optimizers["monitor"] = "Validation SegLoss"
+
+        return optimizers
+
+    def training_step(self, batch, batch_idx):
+        return self.default_step(batch, "Training")
+
+    def validation_step(self, batch, batch_idx):
+        return self.default_step(batch, "Validation")
+
+    def test_step(self, batch, batch_idx):
+        return self.default_step(batch, "Test")
