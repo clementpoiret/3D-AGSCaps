@@ -1,4 +1,6 @@
 import torch
+from einops import rearrange, repeat
+from einops.layers.torch import Rearrange
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
@@ -57,13 +59,10 @@ class ConvCapsuleLayer3D(nn.Module):
         self.input_num_capsule = input_num_capsule
         self.num_capsule = num_capsule
         self.num_atoms = num_atoms
-        self.strides = strides
-        self.padding = padding
         self.routings = routings
         self.activation = activation
         self.final_squash = final_squash
         self.sigmoid_routing = sigmoid_routing
-        self.constrained = constrained
 
         in_channels = input_num_atoms if constrained else input_num_capsule * input_num_atoms
         out_channels = num_capsule * num_atoms if constrained else input_num_capsule * num_capsule * num_atoms
@@ -90,44 +89,48 @@ class ConvCapsuleLayer3D(nn.Module):
             self.conv = nn.Sequential(
                 self.conv, SwitchNorm3d(out_channels, using_bn=use_batchnorm))
 
-        self.b = nn.Parameter(torch.full((num_capsule, num_atoms, 1, 1, 1),
-                                         0.1))
+        self.b = nn.Parameter(torch.full((num_capsule, num_atoms), 0.1))
+
+        caps_shape = {
+            "Cin": input_num_capsule,
+            "Cout": num_capsule,
+            "Aout": num_atoms
+        }
+        if constrained:
+            self.input_reshaper = Rearrange("b c a h w d -> (b c) a h w d")
+            self.votes_reshaper = Rearrange(
+                "(b Cin) (Cout Aout) h w d -> b Cin Cout Aout h w d",
+                **caps_shape)
+        else:
+            self.input_reshaper = Rearrange("b c a h w d -> b (c a) h w d")
+            self.votes_reshaper = Rearrange(
+                "b (Cin Cout Aout) h w d -> b Cin Cout Aout h w d",
+                **caps_shape)
 
     def forward(self, input_tensor):
         # input shape -> (bs, C, A, x, y, z)
-        input_shape = input_tensor.shape
+        batch_size = input_tensor.shape[0]
 
-        if self.constrained:
-            input_tensor_reshaped = input_tensor.view(
-                input_shape[0] * input_shape[1], input_shape[2], input_shape[3],
-                input_shape[4], input_shape[5])  # -> (bs*C,A,x,y,z)
-        else:
-            input_tensor_reshaped = input_tensor.view(
-                input_shape[0], input_shape[1] * input_shape[2], input_shape[3],
-                input_shape[4], input_shape[5])  # -> (bs,C*A,x,y,z)
+        input_tensor_reshaped = self.input_reshaper(input_tensor)
 
         conv = self.conv(input_tensor_reshaped)
-
-        # votes_shape = conv.shape
         _, _, conv_height, conv_width, conv_depth = conv.shape
 
-        votes = conv.view(input_shape[0], self.input_num_capsule,
-                          self.num_capsule, self.num_atoms, conv_height,
-                          conv_width, conv_depth)  # -> (bs,input_C,C,A,x,y,z)
-
-        # votes: (bs,input_C,x,y,z,C,A)
-        # votes = votes.permute(0, 1, 4, 5, 6, 2, 3)
+        votes = self.votes_reshaper(conv)
 
         logit_shape = torch.Size([
-            input_shape[0],
+            batch_size,
             self.input_num_capsule,
             self.num_capsule,
             conv_height,
             conv_width,
             conv_depth,
         ])  # -> (bs,input_C,x,y,z,C)
-        biases_replicated = self.b.repeat(1, 1, conv_height, conv_width,
-                                          conv_depth)  # -> (x,y,z,C,A)
+        biases_replicated = repeat(self.b,
+                                   "c a -> c a h w d",
+                                   h=conv_height,
+                                   w=conv_width,
+                                   d=conv_depth)
 
         activations = update_routing(
             votes=votes,
