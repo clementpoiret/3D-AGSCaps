@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 import torch.nn.functional as F
+from einops import rearrange
 from torch import nn, optim
 
 from .helpers import number_of_features_per_level, smsquash, squash
@@ -174,8 +175,6 @@ class AGSCaps(nn.Module):
         # Computes actual segmentation with vectors' norm
         segmentation = self.outseg(smsquash(segcaps))
 
-        bs, _, _, H, W, D = segcaps.shape
-
         # For training, the true label is used to mask the output of
         # capsule layer.
         # For prediction, mask using the capsule with maximal length.
@@ -188,11 +187,11 @@ class AGSCaps(nn.Module):
             classes = segcaps.norm(dim=2, p=2)
             _, mask = classes.max(dim=1, keepdim=True)
 
-        mask = mask.unsqueeze(2)
+        mask = rearrange(mask, "b c h w d -> b c 1 h w d")
         masked = segcaps * mask
 
         # Merging caps and atoms
-        masked = masked.view(bs, -1, H, W, D)
+        masked = rearrange(masked, "b c a h w d -> b (c a) h w d")
 
         # Reconstructing via the reconstructor network
         reconstruction = self.reconstructor(masked)
