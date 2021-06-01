@@ -1,5 +1,5 @@
 import torch
-from einops import rearrange, repeat
+from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange
 from torch import nn
 from torch.autograd import Variable
@@ -58,7 +58,6 @@ class ConvCapsuleLayer3D(nn.Module):
         super(ConvCapsuleLayer3D, self).__init__()
         self.input_num_capsule = input_num_capsule
         self.num_capsule = num_capsule
-        self.num_atoms = num_atoms
         self.routings = routings
         self.activation = activation
         self.final_squash = final_squash
@@ -147,53 +146,56 @@ class ConvCapsuleLayer3D(nn.Module):
 
 def update_routing(votes, biases, logit_shape, num_dims, num_routing,
                    final_nonlinearity, final_squash, sigmoid_routing):
-    # votes: (bs,1,128,128,128,8,32)
-    if num_dims == 7:
-        votes_t_shape = 3, 0, 1, 2, 4, 5, 6
-        r_t_shape = 1, 2, 3, 0, 4, 5, 6
-    else:
+    if not num_dims == 7:
         raise NotImplementedError('Not implemented')
 
-    votes_trans = votes.permute(votes_t_shape)  # -> (A,bs,input_C,x,y,z,C)
-    # _, _, _, height, width, depth, caps = votes_trans.shape
-
-    # activations = []
+    votes_trans = rearrange(votes,
+                            "b Cin Cout Aout h w d -> Aout b Cin Cout h w d")
 
     if sigmoid_routing:
         routing = torch.sigmoid
         logits = Variable(torch.ones(logit_shape), requires_grad=False).to(
-            votes.device)  # -> (bs,input_C,x,y,z,C)
+            votes.device)  # -> (bs,input_C,C,x,y,z)
     else:
         routing = nn.Softmax(dim=2)
         logits = Variable(torch.zeros(logit_shape), requires_grad=False).to(
-            votes.device)  # -> (bs,input_C,x,y,z,C)
+            votes.device)  # -> (bs,input_C,C,x,y,z)
 
     for i in range(num_routing):
         """Routing while loop."""
         route = routing(logits)  # -> (bs,input_C,x,y,z,C)
 
         if i == num_routing - 1:
-            preactivate_unrolled = route * votes_trans  # -> (A,bs,input_C,x,y,z,C)
-            preact_trans = preactivate_unrolled.permute(
-                r_t_shape)  # -> (bs,input_C,x,y,z,C,A)
-            preactivate = preact_trans.sum(dim=1) + biases  # -> (bs,x,y,z,C,A)
+            preactivate = rearrange(
+                route * votes_trans,
+                "Aout b Cin Cout h w d -> b Cin Cout Aout h w d")
+            preactivate = reduce(preactivate,
+                                 "b Cin Cout Aout h w d -> b Cout Aout h w d",
+                                 "sum")
+            preactivate += biases
+
             if final_squash:
                 activation = final_nonlinearity(
                     preactivate, dim=2, caps_dim=1,
-                    atoms_dim=2)  # -> (bs,x,y,z,C,A)
+                    atoms_dim=2)  # -> (bs,C,A,x,y,z)
             else:
                 activation = preactivate
 
         else:
-            preactivate_unrolled = route * votes_trans  # -> (A,bs,input_C,x,y,z,C)
-            preact_trans = preactivate_unrolled.permute(
-                r_t_shape)  # -> (bs,input_C,x,y,z,C,A)
-            preactivate = preact_trans.sum(dim=1) + biases  # -> (bs,x,y,z,C,A)
-            activation = h.squash(preactivate, safe=True,
-                                  dim=2)  # -> (bs,x,y,z,C,A)
+            preactivate = rearrange(
+                route * votes_trans,
+                "Aout b Cin Cout h w d -> b Cin Cout Aout h w d")
+            preactivate = reduce(preactivate,
+                                 "b Cin Cout Aout h w d -> b Cout Aout h w d",
+                                 "sum")
+            preactivate += biases
 
-            act_3d = activation.data.unsqueeze(1)  # -> (bs,1,x,y,z,C,A)
-            distances = torch.sum(votes * act_3d, dim=3)
+            activation = h.squash(preactivate, safe=True,
+                                  dim=2)  # -> (bs,C,A,x,y,z)
+
+            act_3d = rearrange(activation, "b c a h w d -> b 1 c a h w d")
+            distances = reduce(votes * act_3d,
+                               "b Cin c a h w d -> b Cin c h w d", "sum")
             logits += distances
 
     return activation
