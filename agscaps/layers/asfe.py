@@ -206,7 +206,7 @@ class StemCaps(nn.Sequential):
 
         if reshape:
             self.add_module("ReshapeStem",
-                            Rearrange("b c h w d -> b 1 c h w d"))
+                            Rearrange("b a h w d -> b 1 a h w d"))
 
 
 class StemBlock(nn.Module):

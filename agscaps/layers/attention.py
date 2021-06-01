@@ -1,3 +1,4 @@
+from einops import rearrange
 from torch import nn
 
 from .switchnorm import SwitchNorm3d
@@ -77,15 +78,14 @@ class AttentionBlock(nn.Module):
         # Reshaping
         # g & x should normally have the same shape here
         # I don't think we should be more specific right now.
-        bs, C, A, a, b, c = g.shape
+        g1 = self.W_g(rearrange(g, "b c a h w d -> b (c a) h w d"))
+        x1 = self.W_x(rearrange(x, "b c a h w d -> b (c a) h w d"))
 
-        g1 = self.W_g(g.view(bs, C * A, a, b, c))
-        x1 = self.W_x(x.view(bs, C * A, a, b, c))
         psi = self.relu(g1 + x1)
         psi = self.psi(psi)
 
         # Unsqueeze to match capsule dimension
-        psi = psi.unsqueeze(1)
+        psi = rearrange(psi, "b a h w d -> b 1 a h w d")
         out = x * psi
 
         return out
