@@ -214,7 +214,7 @@ class SegmentationModel(pl.LightningModule):
                  classes_names=None,
                  is_capsnet=False):
         super(SegmentationModel, self).__init__()
-        self.hparams = hparams
+        self.α = hparams['α']
         self.learning_rate = learning_rate
         self.seg_loss = seg_loss
         self.rec_loss = rec_loss
@@ -239,7 +239,7 @@ class SegmentationModel(pl.LightningModule):
         target = x * mask
         rec_loss = self.rec_loss(reconstruction, target)
         seg_loss = self.seg_loss(y_hat, labels.long())
-        loss = seg_loss + self.hparams['α'] * rec_loss
+        loss = seg_loss + self.α * rec_loss
 
         self.log(f"{log_preffix} SegLoss", seg_loss)
         self.log(f"{log_preffix}  RecLoss", rec_loss)

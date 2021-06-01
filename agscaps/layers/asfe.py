@@ -1,4 +1,5 @@
-import torch
+from einops import rearrange
+from einops.layers.torch import Rearrange
 from torch import nn
 
 from ..helpers import calc_same_padding
@@ -151,16 +152,6 @@ class SingleConv(nn.Sequential):
             self.add_module(name, module)
 
 
-class ReshapeStem(nn.Module):
-
-    def __init__(self, dim=1):
-        super(ReshapeStem, self).__init__()
-        self.dim = dim
-
-    def forward(self, x):
-        return x.unsqueeze(self.dim)
-
-
 class StemCaps(nn.Sequential):
 
     def __init__(self,
@@ -214,7 +205,8 @@ class StemCaps(nn.Sequential):
                            dilation=stem_dilation[stem_conv]))
 
         if reshape:
-            self.add_module("ReshapeStem", ReshapeStem())
+            self.add_module("ReshapeStem",
+                            Rearrange("b c h w d -> b 1 c h w d"))
 
 
 class StemBlock(nn.Module):
@@ -243,5 +235,5 @@ class StemBlock(nn.Module):
         self.stems = nn.ModuleList(stems)
 
     def forward(self, x):
-        x = torch.stack([stem(x) for stem in self.stems], dim=1)
-        return x
+        return rearrange([stem(x) for stem in self.stems],
+                         "c b a h w d -> b c a h w d")
