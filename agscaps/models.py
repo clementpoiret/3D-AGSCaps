@@ -242,7 +242,7 @@ class SegmentationModel(pl.LightningModule):
         loss = seg_loss + self.α * rec_loss
 
         self.log(f"{log_preffix} SegLoss", seg_loss)
-        self.log(f"{log_preffix}  RecLoss", rec_loss)
+        self.log(f"{log_preffix} RecLoss", rec_loss)
 
         return loss
 
