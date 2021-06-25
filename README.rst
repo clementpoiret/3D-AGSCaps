@@ -87,7 +87,14 @@ What's next?
 Installation
 ------------
 
-Install 3D-AGSCaps 0.1.0 (may not be the latest release, please check the release page) by running:
+Install the latest 3D-AGSCaps 0.2.0 (refactoring using Einops) by running:
+
+.. code-block::
+
+    pip install https://github.com/clementpoiret/3D-AGSCaps/releases/download/v0.2.0/AGSCaps-0.2.0-py3-none-any.whl
+    
+
+Or, install 3D-AGSCaps 0.1.0 (original version of the paper / poster) by running:
 
 .. code-block::
 
