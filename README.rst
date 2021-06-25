@@ -8,7 +8,7 @@ To assess this hypothesis, we tested our model on hippocampal segmentation (ante
 - Original poster: https://hippomnesis.dev/2021/06/10/3d-agscaps/
 - Paper: in prep.
 
-As of now, we do not provide a pretrained model, but it is in my to-do list. In the meantime, you can use our layers/architectures like in the `main.py` file:
+Currently, we do not provide a pretrained model, but it is in our to-do list. In the meantime, you can use our layers/architectures like in the `main.py` file:
 
 .. code-block:: python
 
