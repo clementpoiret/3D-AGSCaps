@@ -1,7 +1,7 @@
 3D-AGSCaps
 ========
 
-3D-AGSCaps is mainly provided to serve as a proof-of-concept. We wanted to show that Capsule Networks (ref) were able to accurately perform 3D segmentation tasks.
+3D-AGSCaps is mainly provided as a proof-of-concept. We wanted to show that Capsule Networks (ref) were able to accurately perform 3D segmentation tasks.
 
 To assess this hypothesis, we tested our model on hippocampal segmentation (antero-posterior & hippocampal subfields).
 
@@ -68,31 +68,38 @@ As of now, we do not provide a pretrained model, but it is in my to-do list. In 
 Features
 --------
 
-- Be awesome
-- Make things faster
+- 3D Capsule Layer,
+- Atrous Spatial Feature Extraction for multi-scale feature extraction before entering the Capsule Network,
+- Attention Gates to modulate Capsules' L2 norm,
+- Basic UNet-like architecture.
+
+What's next?
+------------
+
+- [ ] Provide pre-trained models,
+- [ ] Publish a reference paper,
+- [ ] Provide a working software to segment the hippocampus with a GUI (no code required) using pre-trained models.
 
 Installation
 ------------
 
-Install $project by running:
+Install 3D-AGSCaps 0.1.0 (may not be the latest release, please check the release page) by running:
 
 .. code-block::
 
-    install project
+    pip install https://github.com/clementpoiret/3D-AGSCaps/releases/download/v0.1.0/AGSCaps-0.1.0-py3-none-any.whl
 
 Contribute
 ----------
 
-- Issue Tracker: github.com/$project/$project/issues
-- Source Code: github.com/$project/$project
+- Issues or suggestions? Feel free to open an issue or a pull request! :)
 
 Support
 -------
 
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+If you are having issues, please let us know at clement.poiret[at]cea.fr
 
 License
 -------
 
-The project is licensed under the BSD license.
+The project is licensed under the MIT license.
