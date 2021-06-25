@@ -72,6 +72,7 @@ Features
 --------
 
 - 3D Capsule Layer,
+- SMSquash activation function for Multiclass classification tasks,
 - Atrous Spatial Feature Extraction for multi-scale feature extraction before entering the Capsule Network,
 - Attention Gates to modulate Capsules' L2 norm,
 - Basic UNet-like architecture.
