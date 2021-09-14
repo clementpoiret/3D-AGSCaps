@@ -114,3 +114,7 @@ License
 -------
 
 The project is licensed under the MIT license.
+
+To cite this work, please see the following example:
+
+``Clément POIRET. (2021). clementpoiret/3D-AGSCaps: Zenodo Release (v0.2.1). Zenodo. https://doi.org/10.5281/zenodo.5506955``
