@@ -1,6 +1,9 @@
 3D-AGSCaps
 ========
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5506955.svg
+   :target: https://doi.org/10.5281/zenodo.5506955
+
 3D-AGSCaps is mainly provided as a proof-of-concept. We wanted to show that Capsule Networks (ref) were able to accurately perform 3D segmentation tasks.
 
 To assess this hypothesis, we tested our model on hippocampal segmentation (antero-posterior & hippocampal subfields).
